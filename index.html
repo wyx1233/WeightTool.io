@@ -1,0 +1,164 @@
+<html>
+<head>
+  <script src="https://d3js.org/d3.v6.min.js">
+  </script>
+  <style>
+    table, th, td {
+        border: 1px solid black;
+    }
+    #columnInput {
+      padding: 10px;
+      border-radius: 10px;
+      border: solid 2px black;
+      width: 15vw;
+    }
+    #columnSpace input{
+      display:inline-block;
+      padding: 10px;
+      width: 7vw;
+      margin-right: 2vw;
+      border-radius: 10px;
+      border: solid 2px black;
+      float:right;
+    }
+    #leftBar {
+      font-family: Inter;
+      height: 100%;
+      width: 25vw;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: rgb(243, 240, 240);
+      overflow-x: hidden;
+      padding-top: 20px;
+    }
+    #container{
+      margin-left: 25vw;
+    }
+    p {
+      display:inline-block;
+      font-weight: bolder;
+    }
+    button {
+      width: 15vw;
+      padding: 10px;
+      text-align: center;
+      background-color: black;
+      color: white;
+      border-radius: 10px;
+      border: solid 1px black;
+    }
+  </style>
+</head>
+  <body>
+    <div id="leftBar">
+      <div style="margin-left: 3vw;">
+      <h2>WEIGHTING TOOL</h2>
+      <h3>Step 1. Choose the file</h3>
+    <input id="inputFile" type="file" onchange="loadFile()" />
+    <br />
+    <br />
+    <h3>Step 2. Add weight</h3>
+    <div id="columnSpace">
+    <p>Actionable: </p></Actionable:><input type="text" id="Actionable" placeholder="Enter 0-1.0"/>
+        <br />
+        <p>Targeted & Accurate: </p><input type="text" id="Accurate"/>
+        <br />
+        <p>Contextual: </p><input type="text" id="Contextual" />
+        <br />
+        <p>Timely: </p><input type="text" id="Timely" />
+        <br />
+        <p>Theme Value: </p><input type="text" id="Theme"/>
+        <br />
+      </div>
+      <input id= "columnInput" type="text" placeholder="Enter Column Name"/>
+      <br />
+      <br />
+      <button onclick="add()">Add</button>
+      <br />
+      <br />
+        <h3>Step 3. Start sort</h3>
+        <button onclick="sorting()">Sort</button>
+        <br /><br />
+      </div>
+      </div>
+      <div id="container"></div>
+        <script>
+          var reader = new FileReader();  
+          function loadFile() {      
+            var file = document.querySelector('input[type=file]').files[0];      
+            reader.addEventListener("load", sorting, false);
+            if (file) {
+              reader.readAsText(file);
+            }      
+          }
+          function add() {
+            var columnInput= document.getElementById("columnInput").value;
+            document.getElementById("columnInput").value = "";
+            var html = document.getElementById('columnSpace').innerHTML;
+            html += '<p>'+columnInput+'</p>';
+            html+= '<input type="text" id="'+columnInput+'"/><br/>'
+            document.getElementById('columnSpace').innerHTML = html;   
+          }
+          function sorting(){   
+            // var Actionable= document.getElementById("Actionable").value;
+            // var Accurate= document.getElementById("Accurate").value;
+            // var Contextual= document.getElementById("Contextual").value;
+            // var Timely= document.getElementById("Timely").value;
+            // var Theme= document.getElementById("Theme").value;
+            //var filePath = request.getParameter("theFilePath");
+            //console.log("file",filePath)
+            var list=document.getElementById("columnSpace").getElementsByTagName("input");
+            var strData="";
+            for(var i=0;i<list.length && list[i];i++)
+            {
+                  if(list[i].type=="text"&&list[i].id!="subEmail")  
+                  {
+                      strData +=list[i].id+",";          
+                  }
+            }
+            var strList = strData.split(",")
+            console.log("strData is",strList)
+            var data = d3.csvParse(reader.result, d3.autoType);
+                data.forEach(d => {
+                  var result = 0
+                  for(var i=0;i<strList.length;i++) {
+                    if(strList[i].length>0 && !isNaN(d[strList[i]])){
+                      var weight = document.getElementById(strList[i]).value;
+                      if(weight==0) {
+                        result += d[strList[i]]
+                      } else {
+                        result += d[strList[i]]*weight
+                      }
+                    }
+                  }
+                  d["Result"] = result;
+                    //d["Result"] = d["Actionable"]*Actionable+d["Targeted & Accurate"]*Accurate+d["Contextual"]*Contextual+d["Timely"]*Timely+d["Theme Value"]*Theme;
+                });
+                data.sort((a, b) => d3.descending(a['Result'], b['Result']));
+                console.log(data)
+                    var html = '<table>';
+                    html += '<tr>';
+                    for( var j in data[0] ) {
+                      html += '<th>' + j + '</th>';
+                    }
+                    html += '</tr>';
+                    for( var i = 0; i < data.length; i++) {
+                    html += '<tr>';
+                    for( var j in data[i] ) {
+                        html += '<td>' + data[i][j] + '</td>';
+                    }
+                    html += '</tr>';
+                    }
+                    html += '</table>';
+                    document.getElementById('container').innerHTML = html;   
+
+            }
+        
+
+          
+
+          </script>
+  </body>
+</html>
